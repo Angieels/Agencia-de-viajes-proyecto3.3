@@ -1,46 +1,168 @@
-#  Proyecto de Base de Datos - Agencia de Viajes
+# Sistema de Base de Datos — Agencia de Viajes
 
-Este repositorio contiene el diseño, implementación, población y consultas para el sistema de base de datos de una **Agencia de Viajes** desarrollado en **MySQL**. El proyecto cumple estrictamente con el esquema relacional requerido, restricciones de integridad y la guía de 20 consultas estandarizadas.
+Proyecto de base de datos relacional para la gestión de una **Agencia de Viajes**, desarrollado en **MySQL**. El sistema administra clientes, destinos turísticos, paquetes, guías de turismo, reservas y pagos, aplicando normalización, integridad referencial y consultas SQL avanzadas.
 
-##  Estructura del Repositorio
+---
 
-De acuerdo con las pautas de entrega del proyecto, los archivos se organizan de la siguiente manera:
+## Descripción del proyecto
+
+La agencia necesita controlar de forma ordenada:
+
+- Los **clientes** que contratan viajes.
+- Los **destinos** turísticos disponibles.
+- Los **guías de turismo** asignados a cada paquete.
+- Los **paquetes turísticos** ofrecidos (precio, cupos, fechas).
+- Las **reservas** que hacen los clientes sobre esos paquetes.
+- Los **pagos** asociados a cada reserva.
+
+Este repositorio contiene el modelo de datos, los scripts SQL y la documentación necesaria para desplegar la base de datos completa.
+
+---
+
+## Estructura del repositorio
 
 | N° | Archivo | Contenido |
-|--- |--- |--- |
-| **1** | `01_script_creacion.sql` | Sentencias `CREATE TABLE` con todas las llaves primarias, foráneas y restricciones relacionales. |
-| **2** | `02_script_insercion.sql` | Sentencias `INSERT INTO` con un mínimo de 10 registros lógicos por tabla. |
-| **3** | `03_consultas.sql` | Las 20 consultas del estándar de negocio solicitadas debidamente documentadas. |
-| **4** | `04_usuarios.sql` | Creación de perfiles de usuario de Base de Datos (`admin_agencia` y `docente_agencia`) con sus respectivos privilegios. |
-| **5** | `backup_agencia_viajes_nombre.sql` | Copia de seguridad completa (Backup estructurado) de la base de datos en formato SQL. |
-| **6** | `README.md` | Documentación técnica del proyecto (Este archivo). |
+|----|----------|-----------|
+| 1 | `01_script_creacion.sql` | Sentencias `CREATE TABLE` con todas sus restricciones. |
+| 2 | `02_script_insercion.sql` | `INSERT INTO` con al menos 10 registros por tabla. |
+| 3 | `03_consultas.sql` | Las 20 consultas solicitadas con comentarios identificadores. |
+| 4 | `04_usuarios.sql` | Scripts para crear los usuarios `admin` y `docente` con sus permisos. |
+| 5 | `backup_agencia-viajes_angie.sql` | Backup completo de la base de datos en formato SQL. |
+| 6 | `README.md` | Documentación completa del proyecto. |
 
 ---
 
-##  Entidades del Modelo Relacional
+## Modelo Entidad-Relación
 
-La base de datos se compone de las siguientes tablas interconectadas:
-*   **Clientes:** Registro de usuarios principales de la agencia.
-*   **Destinos:** Lugares geográficos y turísticos que ofrece la agencia.
-*   **Guías de Turismo:** Personal encargado de guiar los recorridos y su capacidad máxima.
-*   **Paquetes Turísticos:** Oferta comercial que asocia un destino, un guía asignado, precio y cupos.
-*   **Reservas:** Entidad transaccional que une al cliente con el paquete seleccionado.
-*   **Pagos:** Control de flujos económicos y estados contables de cada reserva efectuada.
+**Entidades principales:**
+
+- `clientes` — Entidad Principal 1
+- `paquetes_turisticos` — Entidad Principal 2
+- `reservas` — Transacción (vincula cliente y paquete)
+- `pagos` — Pago/Movimiento (asociado a una reserva)
+
+**Entidades de apoyo (catálogos):**
+
+- `destinos`
+- `guias_turismo`
+
+### Diagrama Entidad-Relación (representación textual)
+
+```
+ clientes                     paquetes_turisticos                  destinos
++---------------+           +------------------------+          +------------------+
+| id_cliente PK |           | id_paquete PK          |          | id_destino PK    |
+| nombre        |           | nombre_paquete         |   N:1    | nombre_destino   |
+| apellido      |           | id_destino FK  --------|--------->| pais             |
+| dui           |           | id_guia FK     --------|----+     | ciudad           |
+| email         |           | duracion_dias          |    |     | categoria        |
+| telefono      |           | precio                 |    |     | descripcion      |
+| ciudad        |           | cupo_maximo            |    |     +------------------+
+| fecha_registro|           | cupo_disponible        |    |
++-------+-------+           | fecha_salida           |    |     guias_turismo
+        | 1                 | estado                 |    |    +------------------+
+        |                   +-----------+------------+    +--->| id_guia PK       |
+        | N                             | 1                    | nombre           |
++-------v-------+                       | N                    | apellido         |
+|   reservas    +<----------------------+                      | email            |
+| id_reserva PK |                                               | telefono        |
+| id_cliente FK |                                               | idiomas         |
+| id_paquete FK |                                               | anios_experiencia|
+| fecha_reserva |                                               +------------------+
+| cantidad_pers.|
+| total         |
+| estado        |
++-------+-------+
+        | 1
+        |
+        | N
++-------v-------+
+|     pagos     |
+| id_pago PK    |
+| id_reserva FK |
+| monto         |
+| fecha_pago    |
+| metodo_pago   |
+| estado_pago   |
++---------------+
+```
+
+### Cardinalidades
+
+| Relación | Cardinalidad |
+|----------|--------------|
+| `clientes` → `reservas` | 1 a N |
+| `paquetes_turisticos` → `reservas` | 1 a N |
+| `destinos` → `paquetes_turisticos` | 1 a N |
+| `guias_turismo` → `paquetes_turisticos` | 1 a N |
+| `reservas` → `pagos` | 1 a N |
 
 ---
 
-##  Instrucciones de Instalación y Uso
+## Integridad referencial
 
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone [https://github.com/TU_USUARIO/TU_REPOSITORIO.git](https://github.com/TU_USUARIO/TU_REPOSITORIO.git)
-    cd TU_REPOSITORIO
-    ```
+- `ON DELETE CASCADE` en `reservas.id_cliente` y `pagos.id_reserva`: si se elimina un cliente o una reserva, se eliminan sus registros dependientes.
+- `ON DELETE RESTRICT` en `paquetes_turisticos.id_destino`, `paquetes_turisticos.id_guia` y `reservas.id_paquete`: evita eliminar destinos, guías o paquetes que ya tienen datos asociados.
+- `ON UPDATE CASCADE` en todas las llaves foráneas: si cambia un ID referenciado, se actualiza automáticamente en las tablas hijas.
+- Restricciones `CHECK` para validar precios positivos, cupos coherentes (`cupo_disponible <= cupo_maximo`), cantidades de personas mayores a 0 y montos de pago positivos.
+- Restricciones `UNIQUE` en DUI y correo de clientes, correo de guías, y combinación destino/país.
 
-2.  **Ejecutar los Scripts en MySQL:**
-    *   Abre tu terminal o tu cliente gráfico de preferencia (MySQL Workbench, DBeaver, etc.).
-    *   Ejecuta el archivo `01_script_creacion.sql` para generar la estructura.
-    *   Ejecuta el archivo `02_script_insercion.sql` para poblar las tablas con los registros iniciales de prueba.
+---
 
-3.  **Probar las consultas:**
-    *   El archivo `03_consultas.sql` contiene los 20 requerimientos de negocio listos para correr de manera secuencial o individual.
+## Usuarios de la base de datos
+
+| Usuario | Permisos |
+|---------|----------|
+| `admin_agencia` | Control total sobre la base de datos. |
+| `docente_agencia` | Solo lectura (`SELECT`), pensado para revisión del proyecto. |
+| `operador_agencia` | `SELECT`, `INSERT`, `UPDATE` (sin permisos de borrado ni de modificar estructura). |
+
+Ver detalle en `04_usuarios.sql`.
+
+---
+
+## Instalación y ejecución
+
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/tu-usuario/agencia-viajes-db.git
+   cd agencia-viajes-db
+   ```
+
+2. Ejecutar los scripts en orden desde la terminal de MySQL:
+   ```bash
+   mysql -u root -p < 01_script_creacion.sql
+   mysql -u root -p < 02_script_insercion.sql
+   mysql -u root -p < 04_usuarios.sql
+   ```
+
+3. Ejecutar las consultas de prueba:
+   ```bash
+   mysql -u root -p agencia_viajes < 03_consultas.sql
+   ```
+
+4. (Opcional) Restaurar desde el backup completo:
+   ```bash
+   mysql -u root -p < backup_agencia-viajes_angie.sql
+   ```
+
+---
+
+## Tecnologías utilizadas
+
+- **Motor de base de datos:** MySQL (InnoDB)
+- **Lenguaje:** SQL
+- **Control de versiones:** Git y GitHub
+
+---
+
+## Notas
+
+- Todas las tablas están en **Tercera Forma Normal (3FN)**: sin dependencias transitivas ni datos repetidos innecesariamente.
+- Las 20 consultas de `03_consultas.sql` cubren `INSERT`, `SELECT` con filtros, `UPDATE`, `DELETE`, `JOIN`, `LEFT JOIN`, funciones de agregación (`SUM`, `AVG`, `COUNT`), `HAVING` y subconsultas.
+
+---
+
+## Autoría
+
+Proyecto desarrollado por **Angie** para la asignatura de Base de Datos — Técnico en Desarrollo de Software, Complejo Educativo República del Ecuador. Docente: Ing. Reina Díaz Morales.
